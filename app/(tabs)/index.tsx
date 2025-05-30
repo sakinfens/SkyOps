@@ -1,75 +1,146 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { router } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { FlatList, Pressable, StyleSheet } from 'react-native';
 
-import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { fetchMetar } from '@/utils/weather';
+
+interface ParsedMetar {
+  wind: string;
+  visibility: string;
+  sky: string;
+  temperature: string;
+  pressure: string;
+  raw: string;
+}
+
+interface MenuItem {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  route?: '/(tabs)/trips' | '/(tabs)/aircraft';
+}
+
+const data: MenuItem[] = [
+  {
+    id: '1',
+    title: 'Trips',
+    description: 'View and manage upcoming flights',
+    icon: '✈️',
+    route: '/(tabs)/trips',
+  },
+  {
+    id: '2',
+    title: 'Aircraft',
+    description: 'Monitor fleet status',
+    icon: '🛩️',
+    route: '/(tabs)/aircraft',
+  },
+  {
+    id: '3',
+    title: 'Weather',
+    description: 'Check weather conditions',
+    icon: '🌤️',
+  },
+];
 
 export default function HomeScreen() {
+  const [weatherData, setWeatherData] = useState<ParsedMetar | null>(null);
+
+  useEffect(() => {
+    async function loadWeather() {
+      const metar = await fetchMetar('KJFK');
+      setWeatherData(metar);
+    }
+    loadWeather();
+  }, []);
+
+  const handlePress = (item: MenuItem) => {
+    if (item.route) {
+      router.push(item.route);
+    } else if (item.title === 'Weather') {
+      // Could add weather details modal here
+      console.log('Weather pressed');
+    }
+  };
+
+  const renderItem = ({ item }: { item: MenuItem }) => (
+    <Pressable 
+      onPress={() => handlePress(item)}
+      style={({ pressed }) => [
+        styles.itemContainer,
+        pressed && styles.itemPressed
+      ]}>
+      <ThemedView style={styles.itemContent}>
+        <ThemedView style={styles.headerRow}>
+          <ThemedText style={styles.icon}>{item.icon}</ThemedText>
+          <ThemedText type="subtitle">{item.title}</ThemedText>
+        </ThemedView>
+        <ThemedText>{item.description}</ThemedText>
+        {item.title === 'Weather' && weatherData && (
+          <ThemedView style={styles.weatherDetails}>
+            <ThemedText>Wind: {weatherData.wind}</ThemedText>
+            <ThemedText>Visibility: {weatherData.visibility}</ThemedText>
+            <ThemedText>Sky: {weatherData.sky}</ThemedText>
+            <ThemedText>Temperature: {weatherData.temperature}</ThemedText>
+            <ThemedText>Pressure: {weatherData.pressure}</ThemedText>
+          </ThemedView>
+        )}
+      </ThemedView>
+    </Pressable>
+  );
+
   return (
     <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
+      title="SkyOps"
+      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}>
+      <FlatList
+        data={data}
+        renderItem={renderItem}
+        keyExtractor={item => item.id}
+        contentContainerStyle={styles.listContainer}
+        ItemSeparatorComponent={() => <ThemedView style={styles.separator} />}
+      />
     </ParallaxScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  listContainer: {
+    padding: 16,
+  },
+  itemContainer: {
+    width: '100%',
+    borderRadius: 16,
+    backgroundColor: 'white',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  itemContent: {
+    padding: 16,
+    gap: 8,
+  },
+  headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 12,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  icon: {
+    fontSize: 24,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  itemPressed: {
+    opacity: 0.7,
+  },
+  separator: {
+    height: 16,
+  },
+  weatherDetails: {
+    marginTop: 8,
   },
 });
