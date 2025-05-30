@@ -21,7 +21,7 @@ interface MenuItem {
   title: string;
   description: string;
   icon: string;
-  route?: '/(tabs)/trips' | '/(tabs)/aircraft';
+  route?: string;
 }
 
 const data: MenuItem[] = [
@@ -41,6 +41,13 @@ const data: MenuItem[] = [
   },
   {
     id: '3',
+    title: 'Duty Log',
+    description: 'Track duty and rest periods',
+    icon: '⏰',
+    route: '/(tabs)/duty',
+  },
+  {
+    id: '4',
     title: 'Weather',
     description: 'Check weather conditions',
     icon: '🌤️',
@@ -60,7 +67,7 @@ export default function HomeScreen() {
 
   const handlePress = (item: MenuItem) => {
     if (item.route) {
-      router.push(item.route);
+      router.push(item.route as any);
     } else if (item.title === 'Weather') {
       // Could add weather details modal here
       console.log('Weather pressed');
