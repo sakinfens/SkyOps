@@ -37,3 +37,8 @@ git clone https://github.com/YOUR_USERNAME/SkyOps.git
 cd SkyOps
 npm install
 npx expo start
+
+## 🔧 Easy Install
+Download Expo from app store or google play
+use this link :  https://expo.dev/accounts/sakinfens/projects/SkyOps/updates/b6febb3d-3ea1-437c-b5f7-02e5c6f962bc
+
